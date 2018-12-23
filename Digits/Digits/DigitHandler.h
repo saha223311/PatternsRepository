@@ -4,8 +4,9 @@
 #include <fstream>
 #include <map>
 #include <string>
+#include <vector>
 
-enum ResultType { RESULT_DONE, WRONG_DIGIT_NUMBER, WRONG_COUNT_OF_NUMBER, CORRECT_INPUT_FILE, CORRECT_OUTPUT_FILE, INCORRECT_INPUT_FILE, INCORRECT_OUTPUT_FILE };
+enum ResultType { RESULT_DONE, WRONG_COUNT_OF_NUMBER, CORRECT_INPUT_FILE, CORRECT_OUTPUT_FILE, INCORRECT_INPUT_FILE, INCORRECT_OUTPUT_FILE };
 
 class StreamController {
 public:
@@ -72,14 +73,18 @@ public:
 	ResultType setOutputFile(std::string outputFileName);
 
 	ResultType processDigits();
+
+	std::string scanDigits();
+	bool isCorrectDigit(std::string code);
+	bool isCorrectCheckSum(std::string code);
+
 private:
 	StreamController streamController;
 
 	const short digitWidth = 3;
 	const short digitHeight = 3;
-	std::string digits[10];
 
-	std::map<std::string, short> mDigits;
+	std::map<std::string, std::string> mDigits;
 };
 
 ResultType DigitHandler::setInputFile(std::string inputFileName) {
@@ -97,49 +102,73 @@ ResultType DigitHandler::setOutputFile(std::string outputFileName) {
 }
 
 ResultType DigitHandler::processDigits() {
-	std::istream* istream = streamController.getIStream();
-	std::ostream* ostream = streamController.getOStream();
+	while (!streamController.getIStream()->eof()) {
+		std::string code = this->scanDigits();
+		std::string state = "";
 
-	std::string tmpRow;
-	bool isFullRow = true;
-	while (isFullRow) {
-		for (int i = 0; i < digitHeight; ++i) {
-			std::getline(*istream, tmpRow);
-			
-			if (tmpRow.length() / 3 > 10) {
-				return WRONG_COUNT_OF_NUMBER;
-			}
-			else if (tmpRow.length() / 3 != 10) {
-				isFullRow = false;
-			}
-
-			for (int j = 0; j < tmpRow.length() / 3; ++j) {
-				digits[j] += tmpRow.substr(j * digitWidth, 3);
+		if (this->isCorrectDigit(code)) {
+			if (!this->isCorrectCheckSum(code)) {
+				state = "ERR";
 			}
 		}
-		std::getline(*istream, tmpRow);
-		for (int i = 0; i < tmpRow.length() / 3; ++i) {
-			if (mDigits.find(digits[i]) == mDigits.end()) {
-				return WRONG_DIGIT_NUMBER;
-			}
-			*ostream << mDigits[digits[i]];
-			digits[i] = "";
+		else {
+			state = "ILL";
 		}
-		*ostream << std::endl;
+		*streamController.getOStream() << code << " " << state << std::endl;
 	}
-
 	return RESULT_DONE;
 }
 
+std::string DigitHandler::scanDigits() {
+	std::string digits[9];
+	std::string code = "";
+	std::string codePiece;
+
+	for (int i = 0; i < digitHeight; ++i) {
+		std::getline(*streamController.getIStream(), codePiece);
+
+		for (int j = 0; j < codePiece.length() / 3; ++j) {
+			digits[j] += codePiece.substr(j * digitWidth, 3);
+		}
+	}
+	std::getline(*streamController.getIStream(), codePiece);
+	for (int i = 0; i < codePiece.length() / 3; ++i) {
+		if (mDigits.find(digits[i]) == mDigits.end()) {
+			code += "?";
+		}
+		else {
+			code += mDigits[digits[i]];
+		}
+		digits[i] = "";
+	}
+	return code;
+}
+
 DigitHandler::DigitHandler() {
-	mDigits.insert(std::pair<std::string, short>(" _ | ||_|", 0));
-	mDigits.insert(std::pair<std::string, short>("     |  |", 1));
-	mDigits.insert(std::pair<std::string, short>(" _  _||_ ", 2));
-	mDigits.insert(std::pair<std::string, short>(" _  _| _|", 3));
-	mDigits.insert(std::pair<std::string, short>("   |_|  |", 4));
-	mDigits.insert(std::pair<std::string, short>(" _ |_  _|", 5));
-	mDigits.insert(std::pair<std::string, short>(" _ |_ |_|", 6));
-	mDigits.insert(std::pair<std::string, short>(" _   |  |", 7));
-	mDigits.insert(std::pair<std::string, short>(" _ |_||_|", 8));
-	mDigits.insert(std::pair<std::string, short>(" _ |_| _|", 9));
+	mDigits.insert(std::pair<std::string, std::string>(" _ | ||_|", "0"));
+	mDigits.insert(std::pair<std::string, std::string>("     |  |", "1"));
+	mDigits.insert(std::pair<std::string, std::string>(" _  _||_ ", "2"));
+	mDigits.insert(std::pair<std::string, std::string>(" _  _| _|", "3"));
+	mDigits.insert(std::pair<std::string, std::string>("   |_|  |", "4"));
+	mDigits.insert(std::pair<std::string, std::string>(" _ |_  _|", "5"));
+	mDigits.insert(std::pair<std::string, std::string>(" _ |_ |_|", "6"));
+	mDigits.insert(std::pair<std::string, std::string>(" _   |  |", "7"));
+	mDigits.insert(std::pair<std::string, std::string>(" _ |_||_|", "8"));
+	mDigits.insert(std::pair<std::string, std::string>(" _ |_| _|", "9"));
+}
+
+bool DigitHandler::isCorrectDigit(std::string code) {
+	if (code.find('?') == std::string::npos) {
+		return true;
+	}
+	return false;
+}
+
+bool DigitHandler::isCorrectCheckSum(std::string code) {
+	int checkSum = 0;
+	for (int i = 0; i < 10; ++i) {
+		checkSum += (code[i] - 48) * (9 - i);
+	}
+	if (checkSum % 11 == 0) return true;
+	else return false;
 }
