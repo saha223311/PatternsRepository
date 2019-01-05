@@ -6,6 +6,11 @@
 #include <string>
 #include <vector>
 
+// Лучше не держать статусы в глобальной области видимости
+// Также плохо когда в одном enum'e есть несколько валидных состояний
+// В идеале функция isOK(ResultType) должна быть тривиально
+// Из вариантов либо использовать один статус для "все хорошо", либо
+// несколько перечислений-результатов для разных типов операций
 enum ResultType { RESULT_DONE, WRONG_COUNT_OF_NUMBER, CORRECT_INPUT_FILE, CORRECT_OUTPUT_FILE, INCORRECT_INPUT_FILE, INCORRECT_OUTPUT_FILE };
 
 class StreamController {
@@ -81,9 +86,11 @@ public:
 private:
 	StreamController streamController;
 
+	// both static
 	const short digitWidth = 3;
 	const short digitHeight = 3;
 
+	// static
 	std::map<std::string, std::string> mDigits;
 };
 
@@ -114,11 +121,13 @@ ResultType DigitHandler::processDigits() {
 		else {
 			state = "ILL";
 		}
+		// Функцию вывода лучше выделить отдельно
 		*streamController.getOStream() << code << " " << state << std::endl;
 	}
 	return RESULT_DONE;
 }
 
+// Хорошо бы отделить чтение от декодирования
 std::string DigitHandler::scanDigits() {
 	std::string digits[9];
 	std::string code = "";
@@ -131,6 +140,9 @@ std::string DigitHandler::scanDigits() {
 			digits[j] += codePiece.substr(j * digitWidth, 3);
 		}
 	}
+	
+	// Если выделить в отдельный метод логику декодирования цифр,
+	// то проще было бы сделать восстановление от единичной ошибки
 	std::getline(*streamController.getIStream(), codePiece);
 	for (int i = 0; i < codePiece.length() / 3; ++i) {
 		if (mDigits.find(digits[i]) == mDigits.end()) {
@@ -145,6 +157,8 @@ std::string DigitHandler::scanDigits() {
 }
 
 DigitHandler::DigitHandler() {
+	// Нужно инициализировать как константу
+	// Использование многострочных строковых литералов сделает левую часть мапы читаемей
 	mDigits.insert(std::pair<std::string, std::string>(" _ | ||_|", "0"));
 	mDigits.insert(std::pair<std::string, std::string>("     |  |", "1"));
 	mDigits.insert(std::pair<std::string, std::string>(" _  _||_ ", "2"));
@@ -170,5 +184,6 @@ bool DigitHandler::isCorrectCheckSum(std::string code) {
 		checkSum += (code[i] - 48) * (9 - i);
 	}
 	if (checkSum % 11 == 0) return true;
+	// else здесь выглядит очень странно
 	else return false;
 }
