@@ -22,6 +22,7 @@ TEST(TestCaseName, Test_02) {
 	EXPECT_EQ(outputRoman, "CXXIII");
 }
 
+// Тест хороший, но логичей выдать ошибку конвертации, а не RESULT_DONE
 TEST(TestCaseName, Test_03) {
 	RomanArabicConvertor convertor;
 	unsigned int inputArabic = 0;
@@ -59,3 +60,6 @@ TEST(TestCaseName, Test_07) {
 	unsigned int outputArabic;
 	EXPECT_EQ(convertor.convertRomanToArabic(inputRoman, outputArabic), WRONG_ROMAN_NUMBER);
 }
+
+// Не хватает тестов на обратный порядок цифр: IX, XL, XC и тд
+// Еще хорошо иметь тест, который проверяет является допусим AB римским числом
