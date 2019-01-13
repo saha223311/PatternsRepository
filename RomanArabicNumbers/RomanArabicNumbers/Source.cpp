@@ -9,14 +9,14 @@ int main() {
 	unsigned int enterArabic;
 	std::string outputRoman;
 	std::cin >> enterArabic;
-	if (convertor.convertArabicToRoman(enterArabic, outputRoman) == RESULT_DONE) {
+	if (convertor.convertArabicToRoman(enterArabic, outputRoman) == RomanArabicConvertor::RESULT_DONE) {
 		std::cout << outputRoman << std::endl;
 	}
 
 	std::string enterRoman;
 	unsigned int outputArabic;
 	std::cin >> enterRoman;
-	if (convertor.convertRomanToArabic(enterRoman, outputArabic) == RESULT_DONE) {
+	if (convertor.convertRomanToArabic(enterRoman, outputArabic) == RomanArabicConvertor::RESULT_DONE) {
 		std::cout << outputArabic << std::endl;
 	}
 

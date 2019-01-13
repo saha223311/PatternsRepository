@@ -2,37 +2,39 @@
 #include <string>
 #include <map>
 
-enum ResultType { RESULT_DONE, WRONG_ROMAN_NUMBER, WRONG_ARABIC_NUMBER };
-
 class RomanArabicConvertor
 {
 public:
-	ResultType convertRomanToArabic(std::string iRoman, unsigned int& oArabic);
-	ResultType convertArabicToRoman(unsigned int iArabic, std::string& oRoman);
-private:
-	const int COUNT_OF_NUM = 13;
-	std::map<char, int> mRomeNums = { {'M',  1000}, {'D',  500}, {'C',  100}, {'L',  50}, {'X',  10}, {'V', 5}, {'I', 1} };
-	unsigned int arabicNums[13] = { 1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1 };
-	std::string romanNums[13] = { "M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I" };
+	static enum ResultType { RESULT_DONE, WRONG_ROMAN_NUMBER, WRONG_ARABIC_NUMBER };
 
-	bool isRomanNum(std::string iRoman);
-	bool isArabicnNum(unsigned int iArabic);
+	static ResultType convertRomanToArabic(const std::string& iRoman, unsigned int& oArabic);
+	static ResultType convertArabicToRoman(unsigned int iArabic, std::string& oRoman);
+private:
+	static const int COUNT_OF_NUM = 13;
+
+	static bool isRomanNum(const std::string& iRoman);
+	static bool isArabicnNum(unsigned int iArabic);
 };
 
-bool RomanArabicConvertor::isRomanNum(std::string iRoman) {
+bool RomanArabicConvertor::isRomanNum(const std::string& iRoman) {
+	if (iRoman.empty()) {
+		return false;
+	}
 	int currentRomanNum = COUNT_OF_NUM - 1;
-	std::string reverseRomanNums[13] = { "M", "MC", "D", "DC", "C", "CX", "L", "LX", "X", "XI", "V", "VI", "I" };
+	std::string reverseIRoman = iRoman;
+	std::reverse(reverseIRoman.begin(), reverseIRoman.end());
+	std::string reverseRomanNums[COUNT_OF_NUM] = { "M", "MC", "D", "DC", "C", "CX", "L", "LX", "X", "XI", "V", "VI", "I" };
 
-	std::reverse(iRoman.begin(), iRoman.end());
 	int currentSymbol = 0;
-	int numRepeated = 0;
-	while ((currentSymbol != iRoman.length() - 1)) {
+	int numRepeated = 0;	
+	while ((currentSymbol != reverseIRoman.size())) {
 		if ((currentRomanNum < 0) || (numRepeated > 3)) {
 			return false;
 		}
-		if (iRoman.find(reverseRomanNums[currentRomanNum], currentSymbol) == currentSymbol) {
-			currentSymbol += reverseRomanNums[currentRomanNum].length();
+		if (reverseIRoman.find(reverseRomanNums[currentRomanNum], currentSymbol) == currentSymbol) {
+			currentSymbol += reverseRomanNums[currentRomanNum].size();
 			numRepeated++;
+			if (reverseRomanNums[currentRomanNum].size() != 1) numRepeated += 2;
 		}
 		else {
 			currentRomanNum--;
@@ -43,14 +45,16 @@ bool RomanArabicConvertor::isRomanNum(std::string iRoman) {
 }
 
 bool RomanArabicConvertor::isArabicnNum(unsigned int iArabic) {
-	if (iArabic > 3000) {
+	if (iArabic > 3000 || iArabic < 1) {
 		return false;
 	}
 	return true;
 }
 
-ResultType RomanArabicConvertor::convertRomanToArabic(std::string iRoman, unsigned int& oArabic) {
-	if (!this->isRomanNum(iRoman)) {
+RomanArabicConvertor::ResultType RomanArabicConvertor::convertRomanToArabic(const std::string& iRoman, unsigned int& oArabic) {
+	std::map<char, int> mRomeNums = { {'M',  1000}, {'D',  500}, {'C',  100}, {'L',  50}, {'X',  10}, {'V', 5}, {'I', 1} };
+
+	if (!isRomanNum(iRoman)) {
 		return WRONG_ROMAN_NUMBER;
 	}
 	oArabic = 0;
@@ -65,8 +69,11 @@ ResultType RomanArabicConvertor::convertRomanToArabic(std::string iRoman, unsign
 	return RESULT_DONE;
 }
 
-ResultType RomanArabicConvertor::convertArabicToRoman(unsigned int iArabic, std::string& oRoman) {
-	if (!this->isArabicnNum(iArabic)) {
+RomanArabicConvertor::ResultType RomanArabicConvertor::convertArabicToRoman(unsigned int iArabic, std::string& oRoman) {
+	const unsigned int arabicNums[COUNT_OF_NUM] = { 1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1 };
+	const std::string romanNums[COUNT_OF_NUM] = { "M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I" };
+
+	if (!isArabicnNum(iArabic)) {
 		return WRONG_ARABIC_NUMBER;
 	}
 	oRoman = "";
